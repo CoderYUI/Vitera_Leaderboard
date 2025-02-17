@@ -264,7 +264,7 @@ function updatePreviewTable(containerId, data, headers) {
                 </tr>
             </thead>
             <tbody>
-                ${data.slice(0, 5).map((row, index) => `
+                ${data.map((row, index) => `
                     <tr>
                         <td>${index + 1}</td>
                         ${row.slice(0, headers.length).map(cell => `

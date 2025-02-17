@@ -199,10 +199,21 @@ td[data-status="timeout"] {
     font-weight: 500;
 }
 
+td[data-status="completed"] {
+    color: #00a344 !important;  /* Darker green for light mode */
+    font-weight: 500;
+}
+
 /* Score Column */
 td:last-child {
     font-weight: 600;
     color: #1a73e8 !important;  /* Blue in light mode */
+}
+
+/* Add before the mobile media query */
+td[data-status="eliminated"] {
+    color: #d32f2f !important;  /* Red color for eliminated status */
+    font-weight: 500;
 }
 
 /* Responsive Design */
@@ -542,6 +553,14 @@ nav {
     color: #ff5252 !important;  /* Brighter red for dark mode */
 }
 
+[data-theme="dark"] td[data-status="eliminated"] {
+    color: #ff5252 !important;  /* Brighter red for dark mode */
+}
+
+[data-theme="dark"] td[data-status="completed"] {
+    color: #4caf50 !important;  /* Brighter green for dark mode */
+}
+
 [data-theme="dark"] td:last-child {
     color: var(--primary-color) !important;  /* Yellow in dark mode */
 }
@@ -638,5 +657,114 @@ nav {
 
     .game-title {
         font-size: 1.29rem;
+    }
+}
+
+/* Winners Podium Styles */
+.winners-podium {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 20px;
+    margin: 20px 0 40px;
+    padding: 20px;
+    background: transparent; /* Make entire podium section transparent */
+}
+
+.podium-place {
+    width: 200px;
+    background: transparent; /* Keep boxes transparent */
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    /* Remove shadow for cleaner look */
+    box-shadow: none;
+    transition: transform 0.3s ease;
+}
+
+.podium-place:hover {
+    transform: translateY(-5px);
+}
+
+.podium-first {
+    margin-bottom: 30px;
+    border: 2px solid #ffd700;
+}
+
+.podium-second {
+    border: 2px solid #c0c0c0;
+}
+
+.podium-third {
+    border: 2px solid #cd7f32;
+}
+
+.medal-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.podium-first .medal-icon {
+    color: #ffd700;
+}
+
+.podium-second .medal-icon {
+    color: #c0c0c0;
+}
+
+.podium-third .medal-icon {
+    color: #cd7f32;
+}
+
+.podium-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin: 10px 0;
+    color: var(--text-color);
+}
+
+.podium-score {
+    font-size: 1.1rem;
+    color: #1a73e8;
+    font-weight: 500;
+}
+
+/* Dark theme support */
+[data-theme="dark"] .podium-place {
+    background: transparent; /* Remove the dark background */
+    box-shadow: none;
+}
+
+[data-theme="dark"] .podium-name {
+    color: var(--dark-text-color);
+}
+
+[data-theme="dark"] .podium-score {
+    color: var(--primary-color);
+}
+
+/* Mobile responsive */
+@media screen and (max-width: 768px) {
+    .winners-podium {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .podium-place {
+        width: 180px;
+    }
+
+    .podium-first {
+        margin-bottom: 0;
+        order: 1;
+    }
+
+    .podium-second {
+        order: 2;
+    }
+
+    .podium-third {
+        order: 3;
     }
 }

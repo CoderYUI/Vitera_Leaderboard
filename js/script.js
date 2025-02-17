@@ -67,7 +67,13 @@ function formatTime(timeStr) {
 }
 
 function formatScore(score) {
-    if (!score || isNaN(score)) return '0';
+    if (!score || isNaN(score)) {
+        // Check if the score is specifically "Eliminated" (case-insensitive)
+        if (typeof score === 'string' && score.toLowerCase() === 'eliminated') {
+            return 'Eliminated';
+        }
+        return '0';
+    }
     return Math.round(parseFloat(score)).toString();
 }
 
@@ -158,13 +164,50 @@ function compareRound1(a, b) {
 function compareRound2(dataA, dataB) {
     const scoreA = parseFloat(dataA[6]) || 0;
     const scoreB = parseFloat(dataB[6]) || 0;
+    
+    // Check if both teams have 0 score or invalid score
+    if ((scoreA === 0 || isNaN(scoreA)) && (scoreB === 0 || isNaN(scoreB))) {
+        // Use Round 1 data for comparison
+        const round1ScoreA = parseInt(dataA[5]) || 0;
+        const round1ScoreB = parseInt(dataB[5]) || 0;
+        if (round1ScoreA !== round1ScoreB) {
+            return round1ScoreB - round1ScoreA;
+        }
+        return compareRound1(dataA, dataB);
+    }
+    
     return scoreB - scoreA;
 }
 
 function compareRound3(dataA, dataB) {
+    // First separate into three categories: scores > 0, score = 0, and eliminated
     const scoreA = parseFloat(dataA[6]) || 0;
     const scoreB = parseFloat(dataB[6]) || 0;
-    return scoreB - scoreA;
+    const isEliminatedA = dataA[6] === 'eliminated' || dataA[6] === 'Eliminated';
+    const isEliminatedB = dataB[6] === 'eliminated' || dataB[6] === 'Eliminated';
+
+    // Put eliminated teams at the bottom
+    if (isEliminatedA && !isEliminatedB) return 1;
+    if (!isEliminatedA && isEliminatedB) return -1;
+    if (isEliminatedA && isEliminatedB) {
+        // Both eliminated, use Round 2 then Round 1 for tiebreaker
+        const round2ScoreA = parseFloat(dataA[5]) || 0;
+        const round2ScoreB = parseFloat(dataB[5]) || 0;
+        if (round2ScoreA !== round2ScoreB) return round2ScoreB - round2ScoreA;
+        return compareRound1(dataA, dataB);
+    }
+
+    // Handle non-eliminated teams
+    // First sort by score (high to low)
+    if (scoreA !== scoreB) return scoreB - scoreA;
+    
+    // For same scores (including 0), use previous rounds as tiebreaker
+    const round2ScoreA = parseFloat(dataA[5]) || 0;
+    const round2ScoreB = parseFloat(dataB[5]) || 0;
+    if (round2ScoreA !== round2ScoreB) return round2ScoreB - round2ScoreA;
+    
+    // If Round 2 scores are also tied, use Round 1
+    return compareRound1(dataA, dataB);
 }
 
 function compareRound4(dataA, dataB) {
@@ -225,7 +268,9 @@ function updateRound1(data) {
     sortedData.forEach((row, index) => {
         const tr = document.createElement('tr');
         const accuracy = row[4] ? row[4].replace('%', '') : '0';
-        const status = formatStatus(row[1]).toLowerCase();
+        const rawStatus = formatStatus(row[1]).toLowerCase();
+        // Change 'complete' to 'completed' to match the CSS class
+        const status = rawStatus === 'complete' ? 'completed' : rawStatus;
         
         tr.innerHTML = `
             <td>${index + 1}</td>
@@ -248,20 +293,114 @@ function updateRound1(data) {
     });
 }
 
-function updateRound2(data) {
+function compareRound1ForRound2(dataA, dataB) {
+    // Get the Round 1 data that's stored in Round 2 sheet
+    const statusA = dataA[1]?.toLowerCase() || '';
+    const statusB = dataB[1]?.toLowerCase() || '';
+    const timeA = dataA[2];
+    const timeB = dataB[2];
+    const movesA = dataA[3];
+    const movesB = dataB[3];
+    const accuracyA = dataA[4];
+    const accuracyB = dataB[4];
+    const scoreA = dataA[5];
+    const scoreB = dataB[5];
+
+    // Use the same logic as Round 1
+    if (statusA !== statusB) {
+        if (statusA.includes('complete')) return -1;
+        if (statusB.includes('complete')) return 1;
+    }
+
+    if (statusA.includes('complete') && statusB.includes('complete')) {
+        if (scoreA !== scoreB) return parseInt(scoreB) - parseInt(scoreA);
+        const timeCompare = timeToSeconds(timeA) - timeToSeconds(timeB);
+        if (timeCompare !== 0) return timeCompare;
+        return (parseInt(movesA) || 0) - (parseInt(movesB) || 0);
+    }
+
+    if (statusA.includes('timeout') && statusB.includes('timeout')) {
+        const accA = parseFloat(accuracyA?.replace('%', '')) || 0;
+        const accB = parseFloat(accuracyB?.replace('%', '')) || 0;
+        if (accA !== accB) return accB - accA;
+        return (parseInt(movesA) || 0) - (parseInt(movesB) || 0);
+    }
+
+    return 0;
+}
+
+async function updateRound2(data) {
+    // First, fetch Round 1 data
+    const round1Data = (await fetchSheetData()).round1;
+    
+    // Create map of team names to their Round 1 data
+    const round1Map = new Map(
+        round1Data.map(row => [row[0], row])
+    );
+    
     const tbody = document.getElementById('round2Body');
+    // Add this line to fix the oldRanks error
     const oldRanks = new Map([...tbody.querySelectorAll('tr')].map(
         row => [row.querySelector('td:nth-child(2)').textContent, row.querySelector('td:first-child').textContent]
     ));
     
     tbody.innerHTML = '';
 
-    const sortedData = data.sort((a, b) => {
-        const scoreDiff = compareRound2(a, b);
-        if (scoreDiff !== 0) return scoreDiff;
-        return compareRound1(a, b);
+    // Check if all scores are 0
+    const allZeroScores = data.every(row => {
+        const totalScore = parseFloat(row[6]) || 0;
+        return totalScore === 0;
     });
 
+    const sortedData = data.sort((a, b) => {
+        const scoreA = parseFloat(a[6]) || 0;
+        const scoreB = parseFloat(b[6]) || 0;
+
+        // If scores are different, sort by score
+        if (scoreA !== scoreB) {
+            return scoreB - scoreA;
+        }
+
+        // If scores are tied (including all zeros), use Round 1 data to break tie
+        const teamAround1 = round1Map.get(a[0]);
+        const teamBround1 = round1Map.get(b[0]);
+
+        if (teamAround1 && teamBround1) {
+            // Use complete Round 1 sorting logic
+            const statusA = teamAround1[1]?.toLowerCase() || '';
+            const statusB = teamBround1[1]?.toLowerCase() || '';
+
+            // First check completion status
+            if (statusA.includes('complete') && !statusB.includes('complete')) return -1;
+            if (!statusA.includes('complete') && statusB.includes('complete')) return 1;
+
+            // If both completed
+            if (statusA.includes('complete') && statusB.includes('complete')) {
+                // Compare times
+                const timeCompare = timeToSeconds(teamAround1[2]) - timeToSeconds(teamBround1[2]);
+                if (timeCompare !== 0) return timeCompare;
+                // Compare moves if times are equal
+                return (parseInt(teamAround1[3]) || 0) - (parseInt(teamBround1[3]) || 0);
+            }
+
+            // If both timeout
+            if (statusA.includes('timeout') && statusB.includes('timeout')) {
+                const accA = parseFloat(teamAround1[4]?.replace('%', '')) || 0;
+                const accB = parseFloat(teamBround1[4]?.replace('%', '')) || 0;
+                if (accA !== accB) return accB - accA;
+                return (parseInt(teamAround1[3]) || 0) - (parseInt(teamBround1[3]) || 0);
+            }
+        }
+
+        // If team not found in Round 1, put them at the end
+        if (teamAround1 && !teamBround1) return -1;
+        if (!teamAround1 && teamBround1) return 1;
+
+        // If neither team found in Round 1, maintain original order
+        return 0;
+    });
+
+    // Rest of updateRound2 remains the same
     sortedData.forEach((row, index) => {
         const tr = document.createElement('tr');
         const status = formatStatus(row[1]).toLowerCase();
@@ -288,7 +427,26 @@ function updateRound2(data) {
     });
 }
 
-function updateRound3(data) {
+async function updateRound3(data) {
+    // First, fetch Round 1 and Round 2 data for tiebreaking
+    const round1Data = (await fetchSheetData()).round1;
+    const round2Data = (await fetchSheetData()).round2;
+    
+    // Create rankings maps - sort Round 2 data first by its own logic
+    const sortedRound2 = round2Data.sort((a, b) => {
+        const scoreA = parseFloat(a[6]) || 0;
+        const scoreB = parseFloat(b[6]) || 0;
+        return scoreB - scoreA;
+    });
+    
+    const round2Rankings = new Map(
+        sortedRound2.map((row, index) => [row[0], index])
+    );
+    
+    const round1Rankings = new Map(
+        round1Data.map((row, index) => [row[0], index])
+    );
+
     const tbody = document.getElementById('round3Body');
     const oldRanks = new Map([...tbody.querySelectorAll('tr')].map(
         row => [row.querySelector('td:nth-child(2)').textContent, row.querySelector('td:first-child').textContent]
@@ -297,26 +455,60 @@ function updateRound3(data) {
     tbody.innerHTML = '';
 
     const sortedData = data.sort((a, b) => {
-        const scoreDiff = compareRound3(a, b);
-        if (scoreDiff !== 0) return scoreDiff;
-        const round2Diff = compareRound2(a, b);
-        if (round2Diff !== 0) return round2Diff;
-        return compareRound1(a, b);
+        const scoreA = parseFloat(a[6]) || 0;
+        const scoreB = parseFloat(b[6]) || 0;
+        const isEliminatedA = a[6] === 'eliminated' || a[6] === 'Eliminated' || a.every(cell => cell === '-' || cell === '');
+        const isEliminatedB = b[6] === 'eliminated' || b[6] === 'Eliminated' || b.every(cell => cell === '-' || cell === '');
+
+        // First sort by scores
+        if (!isEliminatedA && !isEliminatedB) {
+            if (scoreA !== scoreB) return scoreB - scoreA;
+        }
+
+        // Put eliminated teams after teams with scores
+        if (isEliminatedA && !isEliminatedB) return 1;
+        if (!isEliminatedA && isEliminatedB) return -1;
+
+        // For tied scores or both eliminated, use tiebreakers
+        if (scoreA === scoreB || (isEliminatedA && isEliminatedB)) {
+            // First try Round 2 rankings
+            const round2RankA = round2Rankings.get(a[0]);
+            const round2RankB = round2Rankings.get(b[0]);
+            if (round2RankA !== undefined && round2RankB !== undefined) {
+                return round2RankA - round2RankB;
+            }
+
+            // If Round 2 rankings are the same or not found, use Round 1
+            const round1RankA = round1Rankings.get(a[0]);
+            const round1RankB = round1Rankings.get(b[0]);
+            if (round1RankA !== undefined && round1RankB !== undefined) {
+                return round1RankA - round1RankB;
+            }
+        }
+
+        return 0;
     });
 
+    // Rest of updateRound3 remains the same...
     sortedData.forEach((row, index) => {
         const tr = document.createElement('tr');
         const status = formatStatus(row[1]).toLowerCase();
+        const totalScore = row[6];
+        const isEliminated = totalScore === 'eliminated' || 
+                           totalScore === 'Eliminated' || 
+                           row.slice(1, 6).every(cell => cell === '-' || cell === '');
         
         tr.innerHTML = `
             <td>${index + 1}</td>
             <td>${row[0] || '-'}</td>
-            <td data-status="${status}">${row[1] || '-'}</td>
-            <td>${row[2] || '-'}</td>
-            <td>${row[3] || '-'}</td>
-            <td>${row[4] || '-'}</td>
-            <td>${row[5] || '-'}</td>
-            <td>${formatScore(row[6])}</td>
+            <td>${isEliminated ? '-' : (row[1] || '0')}</td>
+            <td>${isEliminated ? '-' : (row[2] || '0')}</td>
+            <td>${isEliminated ? '-' : (row[3] || '0')}</td>
+            <td>${isEliminated ? '-' : (row[4] || '0')}</td>
+            <td>${isEliminated ? '-' : (row[5] || '0')}</td>
+            <td data-status="${isEliminated ? 'eliminated' : ''}">${
+                isEliminated ? 'Eliminated' : (formatScore(totalScore) || '0')
+            }</td>
         `;
         
         // Add rank change animation
@@ -330,7 +522,18 @@ function updateRound3(data) {
     });
 }
 
-function updateRound4(data) {
+async function updateRound4(data) {
+    // Fetch data from previous rounds
+    const allData = await fetchSheetData();
+    const round1Data = allData.round1;
+    const round2Data = allData.round2;
+    const round3Data = allData.round3;
+
+    // Create lookup maps for previous round data
+    const round3Map = new Map(round3Data.map(row => [row[0], row]));
+    const round2Map = new Map(round2Data.map(row => [row[0], row]));
+    const round1Map = new Map(round1Data.map(row => [row[0], row]));
+    
     const tbody = document.getElementById('round4Body');
     const oldRanks = new Map([...tbody.querySelectorAll('tr')].map(
         row => [row.querySelector('td:nth-child(2)').textContent, row.querySelector('td:first-child').textContent]
@@ -339,23 +542,77 @@ function updateRound4(data) {
     tbody.innerHTML = '';
 
     const sortedData = data.sort((a, b) => {
-        const scoreDiff = compareRound4(a, b);
-        if (scoreDiff !== 0) return scoreDiff;
-        const round3Diff = compareRound3(a, b);
-        if (round3Diff !== 0) return round3Diff;
-        const round2Diff = compareRound2(a, b);
-        if (round2Diff !== 0) return round2Diff;
-        return compareRound1(a, b);
+        const scoreA = parseFloat(a[1]) || 0;
+        const scoreB = parseFloat(b[1]) || 0;
+        const isEliminatedA = a[1]?.toLowerCase() === 'eliminated';
+        const isEliminatedB = b[1]?.toLowerCase() === 'eliminated';
+
+        // Always put eliminated teams at the bottom
+        if (isEliminatedA && !isEliminatedB) return 1;
+        if (!isEliminatedA && isEliminatedB) return -1;
+        
+        // If both are non-eliminated, sort by score
+        if (!isEliminatedA && !isEliminatedB) {
+            if (scoreA !== scoreB) return scoreB - scoreA;
+            
+            // For tied scores, use previous round logic
+            const teamAround3 = round3Map.get(a[0]);
+            const teamBround3 = round3Map.get(b[0]);
+            if (teamAround3 && teamBround3) {
+                const round3Diff = compareRound3(teamAround3, teamBround3);
+                if (round3Diff !== 0) return round3Diff;
+            }
+
+            const teamAround2 = round2Map.get(a[0]);
+            const teamBround2 = round2Map.get(b[0]);
+            if (teamAround2 && teamBround2) {
+                const round2Diff = compareRound2(teamAround2, teamBround2);
+                if (round2Diff !== 0) return round2Diff;
+            }
+
+            const teamAround1 = round1Map.get(a[0]);
+            const teamBround1 = round1Map.get(b[0]);
+            if (teamAround1 && teamBround1) {
+                return compareRound1(teamAround1, teamBround1);
+            }
+        }
+
+        // If both eliminated, use previous round rankings
+        if (isEliminatedA && isEliminatedB) {
+            const teamAround3 = round3Map.get(a[0]);
+            const teamBround3 = round3Map.get(b[0]);
+            if (teamAround3 && teamBround3) {
+                const round3Diff = compareRound3(teamAround3, teamBround3);
+                if (round3Diff !== 0) return round3Diff;
+            }
+
+            const teamAround2 = round2Map.get(a[0]);
+            const teamBround2 = round2Map.get(b[0]);
+            if (teamAround2 && teamBround2) {
+                const round2Diff = compareRound2(teamAround2, teamBround2);
+                if (round2Diff !== 0) return round2Diff;
+            }
+
+            const teamAround1 = round1Map.get(a[0]);
+            const teamBround1 = round1Map.get(b[0]);
+            if (teamAround1 && teamBround1) {
+                return compareRound1(teamAround1, teamBround1);
+            }
+        }
+
+        return 0;
     });
 
+    // Rest of the function remains the same...
     sortedData.forEach((row, index) => {
         const tr = document.createElement('tr');
-        const status = formatStatus(row[1]).toLowerCase();
+        const status = row[1] === '-' ? 'eliminated' : formatStatus(row[1]).toLowerCase();
+        const displayStatus = status === 'eliminated' ? 'Eliminated' : (row[1] || '-');
         
         tr.innerHTML = `
             <td>${index + 1}</td>
             <td>${row[0] || '-'}</td>
-            <td data-status="${status}">${row[1] || '-'}</td>
+            <td data-status="${status}">${displayStatus}</td>
         `;
         
         // Add rank change animation
@@ -392,21 +649,72 @@ async function updateOverall(data) {
     if (roundVisibility.round4) thead.appendChild(createTh('Round 4'));
     thead.appendChild(createTh('Total Score'));
 
+    // Fetch previous round data for tiebreaking
+    const allData = await fetchSheetData();
+    const round1Data = allData.round1;
+    const round2Data = allData.round2;
+    const round3Data = allData.round3;
+
+    // Create lookup maps
+    const round3Map = new Map(round3Data.map(row => [row[0], row]));
+    const round2Map = new Map(round2Data.map(row => [row[0], row]));
+    const round1Map = new Map(round1Data.map(row => [row[0], row]));
+
     const sortedData = data.sort((a, b) => {
-        const totalScoreDiff = (parseFloat(b[5]) || 0) - (parseFloat(a[5]) || 0);
-        if (totalScoreDiff !== 0) return totalScoreDiff;
-        
-        const round4Diff = compareRound4(a, b);
-        if (round4Diff !== 0) return round4Diff;
-        
-        const round3Diff = compareRound3(a, b);
-        if (round3Diff !== 0) return round3Diff;
-        
-        const round2Diff = compareRound2(a, b);
-        if (round2Diff !== 0) return round2Diff;
-        
-        return compareRound1(a, b);
+        // First compare total scores
+        const totalScoreA = parseFloat(a[5]) || 0;
+        const totalScoreB = parseFloat(b[5]) || 0;
+        if (totalScoreA !== totalScoreB) return totalScoreB - totalScoreA;
+
+        // If total scores are tied, use Round 3 logic
+        const teamAround3 = round3Map.get(a[0]);
+        const teamBround3 = round3Map.get(b[0]);
+        if (teamAround3 && teamBround3) {
+            const round3Diff = compareRound3(teamAround3, teamBround3);
+            if (round3Diff !== 0) return round3Diff;
+        }
+
+        // If still tied, use Round 2 logic
+        const teamAround2 = round2Map.get(a[0]);
+        const teamBround2 = round2Map.get(b[0]);
+        if (teamAround2 && teamBround2) {
+            const round2Diff = compareRound2(teamAround2, teamBround2);
+            if (round2Diff !== 0) return round2Diff;
+        }
+
+        // If still tied, use Round 1 logic
+        const teamAround1 = round1Map.get(a[0]);
+        const teamBround1 = round1Map.get(b[0]);
+        if (teamAround1 && teamBround1) {
+            return compareRound1(teamAround1, teamBround1);
+        }
+
+        return 0;
     });
+
+    // Update winners podium
+    const podiumContainer = document.querySelector('.winners-podium');
+    podiumContainer.innerHTML = '';
+
+    // Create podium places
+    const podiumHTML = `
+        <div class="podium-place podium-second">
+            <div class="medal-icon">🥈</div>
+            <div class="podium-name">${sortedData[1]?.[0] || '-'}</div>
+            <div class="podium-score">${formatScore(sortedData[1]?.[5] || '0')} pts</div>
+        </div>
+        <div class="podium-place podium-first">
+            <div class="medal-icon">🥇</div>
+            <div class="podium-name">${sortedData[0]?.[0] || '-'}</div>
+            <div class="podium-score">${formatScore(sortedData[0]?.[5] || '0')} pts</div>
+        </div>
+        <div class="podium-place podium-third">
+            <div class="medal-icon">🥉</div>
+            <div class="podium-name">${sortedData[2]?.[0] || '-'}</div>
+            <div class="podium-score">${formatScore(sortedData[2]?.[5] || '0')} pts</div>
+        </div>
+    `;
+    podiumContainer.innerHTML = podiumHTML;
 
     sortedData.forEach((row, index) => {
         const tr = document.createElement('tr');
@@ -415,11 +723,26 @@ async function updateOverall(data) {
             <td>${row[0] || '-'}</td>
         `;
 
-        // Add scores only for visible rounds
-        if (roundVisibility.round1) html += `<td>${formatScore(row[1])}</td>`;
-        if (roundVisibility.round2) html += `<td>${formatScore(row[2])}</td>`;
-        if (roundVisibility.round3) html += `<td>${formatScore(row[3])}</td>`;
-        if (roundVisibility.round4) html += `<td>${formatScore(row[4])}</td>`;
+        // Add scores for visible rounds with elimination check
+        if (roundVisibility.round1) {
+            html += `<td>${formatScore(row[1])}</td>`;
+        }
+        if (roundVisibility.round2) {
+            html += `<td>${formatScore(row[2])}</td>`;
+        }
+        if (roundVisibility.round3) {
+            const isEliminated = row[3]?.toLowerCase() === 'eliminated' || 
+                               (typeof row[3] === 'string' && row[3].split(',').every(cell => cell === '-' || cell === ''));
+            html += `<td data-status="${isEliminated ? 'eliminated' : ''}">${
+                isEliminated ? 'Eliminated' : formatScore(row[3])
+            }</td>`;
+        }
+        if (roundVisibility.round4) {
+            const isEliminated = row[4]?.toLowerCase() === 'eliminated';
+            html += `<td data-status="${isEliminated ? 'eliminated' : ''}">${
+                isEliminated ? 'Eliminated' : formatScore(row[4])
+            }</td>`;
+        }
 
         // Always show total score
         html += `<td>${formatScore(row[5])}</td>`;

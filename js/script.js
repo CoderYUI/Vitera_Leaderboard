@@ -7,6 +7,28 @@ const ROUND3_GID = '2028513950';
 const ROUND4_GID = '893729618';
 const OVERALL_GID = '990261427';
 
+// Add toggleTheme function definition
+function toggleTheme() {
+    const body = document.body;
+    const button = document.querySelector('.theme-switch');
+    const icon = button.querySelector('i');
+    const text = button.querySelector('.theme-text');
+
+    if (body.getAttribute('data-theme') === 'dark') {
+        body.removeAttribute('data-theme');
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+        text.textContent = 'Light Mode';
+        localStorage.setItem('theme', 'light');
+    } else {
+        body.setAttribute('data-theme', 'dark');
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+        text.textContent = 'Dark Mode';
+        localStorage.setItem('theme', 'dark');
+    }
+}
+
 async function fetchSheetData() {
     try {
         const [round1Data, round2Data, round3Data, round4Data, overallData] = await Promise.all([
@@ -414,7 +436,8 @@ function createTh(text) {
     return th;
 }
 
-// Make switchTab globally available
+// Make these functions available globally
+window.toggleTheme = toggleTheme;
 window.switchTab = async function(roundId, event) {
     const isVisible = await checkVisibility(roundId);
     if (!isVisible) {
@@ -531,3 +554,17 @@ async function initLeaderboard() {
 // Initial load and refresh timer
 initLeaderboard();
 setInterval(initLeaderboard, 300000);
+
+// Initialize theme on page load
+document.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.setAttribute('data-theme', 'dark');
+        const button = document.querySelector('.theme-switch');
+        const icon = button.querySelector('i');
+        const text = button.querySelector('.theme-text');
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+        text.textContent = 'Dark Mode';
+    }
+});

@@ -28,83 +28,93 @@
             <button class="tab-button" data-round="overall" onclick="switchTab('overall', event)">Overall Score</button>
         </div>
         <div id="round1" class="leaderboard tab-content active">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Rank</th>
-                        <th>Team Name</th>
-                        <th>Status</th>
-                        <th>Time</th>
-                        <th>Moves</th>
-                        <th>Accuracy</th>
-                        <th>Points</th>
-                    </tr>
-                </thead>
-                <tbody id="round1Body"></tbody>
-            </table>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Team Name</th>
+                            <th>Status</th>
+                            <th>Time</th>
+                            <th>Moves</th>
+                            <th>Accuracy</th>
+                            <th>Points</th>
+                        </tr>
+                    </thead>
+                    <tbody id="round1Body"></tbody>
+                </table>
+            </div>
         </div>
         <div id="round2" class="leaderboard tab-content">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Rank</th>
-                        <th>Team Name</th>
-                        <th>Riddle 1</th>
-                        <th>Riddle 2</th>
-                        <th>Riddle 3</th>
-                        <th>Riddle 4</th>
-                        <th>Riddle 5</th>
-                        <th>Score</th>
-                    </tr>
-                </thead>
-                <tbody id="round2Body"></tbody>
-            </table>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Team Name</th>
+                            <th>Riddle 1</th>
+                            <th>Riddle 2</th>
+                            <th>Riddle 3</th>
+                            <th>Riddle 4</th>
+                            <th>Riddle 5</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="round2Body"></tbody>
+                </table>
+            </div>
         </div>
         <div id="round3" class="leaderboard tab-content">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Rank</th>
-                        <th>Team Name</th>
-                        <th>Balloon 1</th>
-                        <th>Balloon 2</th>
-                        <th>Balloon 3</th>
-                        <th>Balloon 4</th>
-                        <th>Balloon 5</th>
-                        <th>Score</th>
-                    </tr>
-                </thead>
-                <tbody id="round3Body"></tbody>
-            </table>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Team Name</th>
+                            <th>Balloon 1</th>
+                            <th>Balloon 2</th>
+                            <th>Balloon 3</th>
+                            <th>Balloon 4</th>
+                            <th>Balloon 5</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="round3Body"></tbody>
+                </table>
+            </div>
         </div>
         <div id="round4" class="leaderboard tab-content">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Rank</th>
-                        <th>Team Name</th>
-                        <th>Score</th>
-                    </tr>
-                </thead>
-                <tbody id="round4Body"></tbody>
-            </table>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Team Name</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="round4Body"></tbody>
+                </table>
+            </div>
         </div>
         <div id="overall" class="leaderboard tab-content">
-            <table>
-                <thead>
-                    <tr>
-                        <!-- Headers will be dynamically populated -->
-                    </tr>
-                </thead>
-                <tbody id="overallBody"></tbody>
-            </table>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <!-- Headers will be dynamically populated -->
+                        </tr>
+                    </thead>
+                    <tbody id="overallBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <footer class="footer">
         <div class="footer-content">
             <p class="footer-credit">Made with <span class="heart">❤</span> by VITERA Club</p>
-            <button class="theme-switch" id="themeSwitch">
+            <button class="theme-switch" onclick="toggleTheme()">
                 <i class="fas fa-sun"></i>
                 <span class="theme-text">Light Mode</span>
             </button>
@@ -114,18 +124,18 @@
         </div>
     </footer>
 
+    <script>
+        // Placeholder for toggleTheme function that will be defined in script.js
+        function toggleTheme() {
+            if (window.toggleThemeImpl) {
+                window.toggleThemeImpl();
+            }
+        }
+    </script>
+
     <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
     <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
     <script type="module" src="/js/firebase-config.js"></script>
     <script type="module" src="/js/script.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('themeSwitch').addEventListener('click', function() {
-                if (window.toggleTheme) {
-                    window.toggleTheme();
-                }
-            });
-        });
-    </script>
 </body>
 </html>

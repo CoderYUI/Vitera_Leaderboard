@@ -300,6 +300,87 @@ td:last-child {
     margin-bottom: 10px;
 }
 
+/* Enhanced No Data Message */
+.no-data-message {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-color);
+    background: var(--background-color);
+    border-radius: 12px;
+    margin: 20px auto;
+    max-width: 600px;
+    border: 2px dashed var(--primary-color);
+}
+
+.message-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.message-logo {
+    width: 200px;
+    height: auto;
+    margin-bottom: 20px;
+    filter: contrast(1.2) brightness(0.95); /* Increased contrast, slightly darker */
+    transition: filter 0.3s ease;
+}
+
+.no-data-message h2 {
+    color: var(--primary-color);
+    font-family: 'Russo One', sans-serif;
+    font-size: 28px;
+    margin: 0;
+}
+
+.no-data-message p {
+    margin: 5px 0;
+    line-height: 1.6;
+    font-size: 16px;
+}
+
+.no-data-message .emoji {
+    font-size: 48px;
+    margin: 10px 0;
+}
+
+[data-theme="dark"] .no-data-message {
+    background: var(--dark-table-bg);
+    border-color: var(--dark-primary-color);
+}
+
+[data-theme="dark"] .no-data-message p {
+    color: var(--dark-text-color);
+}
+
+[data-theme="dark"] .message-logo {
+    filter: contrast(1.3) brightness(0.85); /* Even more contrast and darker in dark mode */
+}
+
+/* Mobile responsiveness for no-data message */
+@media screen and (max-width: 768px) {
+    .no-data-message {
+        padding: 40px 15px;
+    }
+
+    .message-logo {
+        width: 150px;
+    }
+
+    .no-data-message h2 {
+        font-size: 24px;
+    }
+
+    .no-data-message p {
+        font-size: 14px;
+    }
+
+    .no-data-message .emoji {
+        font-size: 36px;
+    }
+}
+
 /* Navigation */
 nav {
     display: flex;

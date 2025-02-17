@@ -17,6 +17,11 @@
         <h1>Leaderboard Admin Panel</h1>
         <div class="visibility-controls">
             <div class="control-group">
+                <h3>Overall Scores</h3>
+                <button onclick="toggleVisibility('overall')" id="overallToggle">Loading...</button>
+                <div class="preview-table" id="preview-overall"></div>
+            </div>
+            <div class="control-group">
                 <h3>Round 1 - Escape Room</h3>
                 <button onclick="toggleVisibility('round1')" id="round1Toggle">Loading...</button>
                 <div class="preview-table" id="preview-round1"></div>
@@ -35,11 +40,6 @@
                 <h3>Round 4</h3>
                 <button onclick="toggleVisibility('round4')" id="round4Toggle">Loading...</button>
                 <div class="preview-table" id="preview-round4"></div>
-            </div>
-            <div class="control-group">
-                <h3>Overall Scores</h3>
-                <button onclick="toggleVisibility('overall')" id="overallToggle">Loading...</button>
-                <div class="preview-table" id="preview-overall"></div>
             </div>
         </div>
         <button class="logout-btn" onclick="logout()">Logout</button>

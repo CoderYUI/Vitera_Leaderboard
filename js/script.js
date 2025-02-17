@@ -495,9 +495,13 @@ async function checkVisibility(roundId) {
 function showNoDataMessage(container) {
     container.innerHTML = `
         <div class="no-data-message">
-            <div class="emoji">📊</div>
-            <p>This leaderboard will be available soon!</p>
-            <p>Please check back later.</p>
+            <div class="message-content">
+                <img src="/images/logo/advitya.png" alt="Advitya Logo" class="message-logo">
+                <div class="emoji">📊</div>
+                <h2>Leaderboard Coming Soon!</h2>
+                <p>The competition is about to begin. Stay tuned for real-time updates and rankings.</p>
+                <p>May the best team win!</p>
+            </div>
         </div>
     `;
 }

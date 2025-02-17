@@ -1,0 +1,12 @@
+{
+    "rules": {
+      "roundVisibility": {
+        ".read": "true",
+        ".write": "true",
+        "$roundId": {
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    }
+  }
+  

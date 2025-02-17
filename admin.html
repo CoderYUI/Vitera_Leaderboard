@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vitera Leaderboard Admin</title>
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+    <div class="admin-login" id="loginSection">
+        <h2>Admin Login</h2>
+        <input type="password" id="adminPassword" placeholder="Enter admin password">
+        <button onclick="authenticate()">Login</button>
+    </div>
+
+    <div class="admin-panel" id="adminPanel" style="display: none;">
+        <h1>Leaderboard Admin Panel</h1>
+        <div class="visibility-controls">
+            <div class="control-group">
+                <h3>Round 1 - Escape Room</h3>
+                <button onclick="toggleVisibility('round1')" id="round1Toggle">Loading...</button>
+                <div class="preview-table" id="preview-round1"></div>
+            </div>
+            <div class="control-group">
+                <h3>Round 2 - Riddles</h3>
+                <button onclick="toggleVisibility('round2')" id="round2Toggle">Loading...</button>
+                <div class="preview-table" id="preview-round2"></div>
+            </div>
+            <div class="control-group">
+                <h3>Round 3 - Balloons</h3>
+                <button onclick="toggleVisibility('round3')" id="round3Toggle">Loading...</button>
+                <div class="preview-table" id="preview-round3"></div>
+            </div>
+            <div class="control-group">
+                <h3>Round 4</h3>
+                <button onclick="toggleVisibility('round4')" id="round4Toggle">Loading...</button>
+                <div class="preview-table" id="preview-round4"></div>
+            </div>
+            <div class="control-group">
+                <h3>Overall Scores</h3>
+                <button onclick="toggleVisibility('overall')" id="overallToggle">Loading...</button>
+                <div class="preview-table" id="preview-overall"></div>
+            </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <!-- Update Firebase script imports -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
+    <script type="module" src="firebase-config.js"></script>
+    <script type="module" src="admin.js"></script>
+    <script>
+        // Inline script to handle non-module functions
+        function authenticate() {
+            window.adminModule.authenticate();
+        }
+        
+        function toggleVisibility(round) {
+            window.adminModule.toggleVisibility(round);
+        }
+        
+        function logout() {
+            window.adminModule.logout();
+        }
+    </script>
+    <script type="module">
+        import * as adminModule from '/js/admin.js';
+        window.adminModule = adminModule;
+    </script>
+</body>
+</html>

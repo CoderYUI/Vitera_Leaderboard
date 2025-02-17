@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vitera Leaderboard</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav>
+        <div class="logo">
+            <img src="/images/logo/logo_light.jpg" alt="Vitera Logo">
+        </div>
+        <div class="game-title">VITERA LEADERBOARD</div>
+        <div class="nav-logo">
+            <img src="/images/logo/advitya_dark.png" alt="Advitya Logo"> <!-- Changed to light version -->
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="tab-container">
+            <button class="tab-button active" data-round="round1" onclick="switchTab('round1', event)">Round 1</button>
+            <button class="tab-button" data-round="round2" onclick="switchTab('round2', event)">Round 2</button>
+            <button class="tab-button" data-round="round3" onclick="switchTab('round3', event)">Round 3</button>
+            <button class="tab-button" data-round="round4" onclick="switchTab('round4', event)">Round 4</button>
+            <button class="tab-button" data-round="overall" onclick="switchTab('overall', event)">Overall Score</button>
+        </div>
+        <div id="round1" class="leaderboard tab-content active">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Team Name</th>
+                        <th>Status</th>
+                        <th>Time</th>
+                        <th>Moves</th>
+                        <th>Accuracy</th>
+                        <th>Points</th>
+                    </tr>
+                </thead>
+                <tbody id="round1Body"></tbody>
+            </table>
+        </div>
+        <div id="round2" class="leaderboard tab-content">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Team Name</th>
+                        <th>Riddle 1</th>
+                        <th>Riddle 2</th>
+                        <th>Riddle 3</th>
+                        <th>Riddle 4</th>
+                        <th>Riddle 5</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody id="round2Body"></tbody>
+            </table>
+        </div>
+        <div id="round3" class="leaderboard tab-content">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Team Name</th>
+                        <th>Balloon 1</th>
+                        <th>Balloon 2</th>
+                        <th>Balloon 3</th>
+                        <th>Balloon 4</th>
+                        <th>Balloon 5</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody id="round3Body"></tbody>
+            </table>
+        </div>
+        <div id="round4" class="leaderboard tab-content">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Team Name</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody id="round4Body"></tbody>
+            </table>
+        </div>
+        <div id="overall" class="leaderboard tab-content">
+            <table>
+                <thead>
+                    <tr>
+                        <!-- Headers will be dynamically populated -->
+                    </tr>
+                </thead>
+                <tbody id="overallBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-credit">Made with <span class="heart">❤</span> by VITERA Club</p>
+        </div>
+        <div class="footer-logo">
+            <img src="/images/logo/vitera_landscape_light.png" alt="Vitera Landscape Logo">
+        </div>
+    </footer>
+
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
+    <script type="module" src="/js/firebase-config.js"></script>
+    <script type="module" src="/js/script.js"></script>
+</body>
+</html>

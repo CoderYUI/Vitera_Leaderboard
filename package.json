@@ -1,0 +1,12 @@
+{
+  "name": "vitera-leaderboard",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "serve",
+    "build": "echo 'No build required'"
+  },
+  "devDependencies": {
+    "serve": "^14.0.0"
+  }
+}

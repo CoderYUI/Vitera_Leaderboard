@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "**/*",
+      "use": "@vercel/static"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "s-maxage=1, stale-while-revalidate"
+        }
+      ]
+    }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false
+}

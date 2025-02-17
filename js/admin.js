@@ -114,29 +114,136 @@ function updateToggleButtons(states) {
     });
 }
 
+// Add sorting helper functions from script.js
+function timeToSeconds(timeStr) {
+    if (!timeStr) return 9999999;
+    const [minutes, seconds] = timeStr.split(':').map(Number);
+    return minutes * 60 + seconds;
+}
+
+function compareRound1(a, b) {
+    const statusA = a[1]?.toLowerCase() || '';
+    const statusB = b[1]?.toLowerCase() || '';
+    
+    if (statusA !== statusB) {
+        if (statusA.includes('complete')) return -1;
+        if (statusB.includes('complete')) return 1;
+    }
+
+    if (statusA.includes('complete') && statusB.includes('complete')) {
+        const timeCompare = timeToSeconds(a[2]) - timeToSeconds(b[2]);
+        if (timeCompare !== 0) return timeCompare;
+        return (parseInt(a[3]) || 0) - (parseInt(b[3]) || 0);
+    }
+
+    if (statusA.includes('timeout') && statusB.includes('timeout')) {
+        const accuracyA = parseFloat(a[4].replace('%', '')) || 0;
+        const accuracyB = parseFloat(b[4].replace('%', '')) || 0;
+        if (accuracyA !== accuracyB) return accuracyB - accuracyA;
+        return (parseInt(a[3]) || 0) - (parseInt(b[3]) || 0);
+    }
+
+    return 0;
+}
+
+function compareRound2(a, b) {
+    const scoreA = parseFloat(a[6]) || 0;
+    const scoreB = parseFloat(b[6]) || 0;
+    return scoreB - scoreA;
+}
+
+function compareRound3(a, b) {
+    const scoreA = parseFloat(a[6]) || 0;
+    const scoreB = parseFloat(b[6]) || 0;
+    return scoreB - scoreA;
+}
+
+function compareRound4(a, b) {
+    const scoreA = parseFloat(a[1]) || 0;
+    const scoreB = parseFloat(b[1]) || 0;
+    return scoreB - scoreA;
+}
+
 // Update updatePreviewTables to handle errors
 async function updatePreviewTables() {
     try {
         const sheetData = await fetchSheetData();
         if (!sheetData) return;
-        
-        updatePreviewTable('preview-round1', sheetData.round1, [
+
+        // Sort Round 1 data
+        const sortedRound1 = [...sheetData.round1].sort((a, b) => {
+            const statusA = a[1]?.toLowerCase() || '';
+            const statusB = b[1]?.toLowerCase() || '';
+            
+            if (statusA !== statusB) {
+                if (statusA.includes('complete')) return -1;
+                if (statusB.includes('complete')) return 1;
+            }
+            return compareRound1(a, b);
+        });
+
+        // Sort Round 2 data
+        const sortedRound2 = [...sheetData.round2].sort((a, b) => {
+            const scoreDiff = compareRound2(a, b);
+            if (scoreDiff !== 0) return scoreDiff;
+            return compareRound1(a, b);
+        });
+
+        // Sort Round 3 data
+        const sortedRound3 = [...sheetData.round3].sort((a, b) => {
+            const scoreDiff = compareRound3(a, b);
+            if (scoreDiff !== 0) return scoreDiff;
+            const round2Diff = compareRound2(a, b);
+            if (round2Diff !== 0) return round2Diff;
+            return compareRound1(a, b);
+        });
+
+        // Sort Round 4 data
+        const sortedRound4 = [...sheetData.round4].sort((a, b) => {
+            const scoreDiff = compareRound4(a, b);
+            if (scoreDiff !== 0) return scoreDiff;
+            const round3Diff = compareRound3(a, b);
+            if (round3Diff !== 0) return round3Diff;
+            const round2Diff = compareRound2(a, b);
+            if (round2Diff !== 0) return round2Diff;
+            return compareRound1(a, b);
+        });
+
+        // Sort Overall data
+        const sortedOverall = [...sheetData.overall].sort((a, b) => {
+            const totalScoreDiff = (parseFloat(b[5]) || 0) - (parseFloat(a[5]) || 0);
+            if (totalScoreDiff !== 0) return totalScoreDiff;
+            
+            const round4Diff = compareRound4(a, b);
+            if (round4Diff !== 0) return round4Diff;
+            
+            const round3Diff = compareRound3(a, b);
+            if (round3Diff !== 0) return round3Diff;
+            
+            const round2Diff = compareRound2(a, b);
+            if (round2Diff !== 0) return round2Diff;
+            
+            return compareRound1(a, b);
+        });
+
+        // Update preview tables with sorted data
+        updatePreviewTable('preview-round1', sortedRound1, [
             'Team', 'Status', 'Time', 'Moves', 'Accuracy', 'Points'
         ]);
         
-        updatePreviewTable('preview-round2', sheetData.round2, [
+        updatePreviewTable('preview-round2', sortedRound2, [
             'Team', 'R1', 'R2', 'R3', 'R4', 'R5', 'Score'
         ]);
         
-        updatePreviewTable('preview-round3', sheetData.round3, [
+        updatePreviewTable('preview-round3', sortedRound3, [
             'Team', 'B1', 'B2', 'B3', 'B4', 'B5', 'Score'
         ]);
         
-        updatePreviewTable('preview-round4', sheetData.round4, [
+        updatePreviewTable('preview-round4', sortedRound4, [
             'Team', 'Score'
         ]);
         
-        updatePreviewTable('preview-overall', sheetData.overall, [
+        updatePreviewTable('preview-overall', sortedOverall, [
             'Team', 'R1', 'R2', 'R3', 'R4', 'Total'
         ]);
     } catch (error) {
@@ -152,12 +259,14 @@ function updatePreviewTable(containerId, data, headers) {
         <table>
             <thead>
                 <tr>
+                    <th>Rank</th>
                     ${headers.map(h => `<th>${h}</th>`).join('')}
                 </tr>
             </thead>
             <tbody>
-                ${data.slice(0, 5).map(row => `
+                ${data.slice(0, 5).map((row, index) => `
                     <tr>
+                        <td>${index + 1}</td>
                         ${row.slice(0, headers.length).map(cell => `
                             <td>${cell}</td>
                         `).join('')}

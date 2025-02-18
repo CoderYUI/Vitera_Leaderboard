@@ -216,6 +216,23 @@ td[data-status="eliminated"] {
     font-weight: 500;
 }
 
+/* Override the last-child color for eliminated status */
+td[data-status="eliminated"]:last-child,
+[data-theme="dark"] td[data-status="eliminated"]:last-child {
+    color: #ff5252 !important;  /* Bright red in both light and dark mode */
+}
+
+/* Dark Theme Overrides */
+[data-theme="dark"] td[data-status="eliminated"] {
+    color: #ff5252 !important;  /* Brighter red for dark mode */
+}
+
+/* Override any other color rules for eliminated status */
+[data-theme="dark"] td[data-status="eliminated"],
+[data-theme="dark"] tr:hover td[data-status="eliminated"] {
+    color: #ff5252 !important;
+}
+
 /* Responsive Design */
 @media screen and (max-width: 768px) {
     .container {
